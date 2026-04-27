@@ -1,7 +1,7 @@
 -- fancy_clock.lua
 
 local monitorSide = "top"
-local swedenOffset = 2 -- UTC+2 summer, UTC+1 winter
+local swedenOffset = 2
 
 local mon = peripheral.wrap(monitorSide)
 if not mon or peripheral.getType(monitorSide) ~= "monitor" then
@@ -26,47 +26,37 @@ local bigNumbers = {
 }
 
 local function clear(bg)
-    mon.setBackgroundColor(bg or colors.black)
-    mon.setTextColor(colors.white)
+    mon.setBackgroundColor(bg or colors.white)
+    mon.setTextColor(colors.black)
     mon.clear()
     mon.setCursorPos(1, 1)
 end
 
-local function center(y, text, fg, bg)
+local function center(y, text, fg)
     local w = mon.getSize()
-    mon.setTextColor(fg or colors.white)
-    mon.setBackgroundColor(bg or colors.black)
+    mon.setTextColor(fg or colors.black)
+    mon.setBackgroundColor(colors.white)
     mon.setCursorPos(math.floor((w - #text) / 2) + 1, y)
     mon.write(text)
 end
 
-local function bar(y, text, bg, fg)
+local function button(y, text, bg)
     local w = mon.getSize()
     mon.setBackgroundColor(bg)
-    mon.setTextColor(fg or colors.white)
+    mon.setTextColor(colors.white)
     mon.setCursorPos(2, y)
     mon.write(string.rep(" ", w - 2))
-    center(y, text, fg or colors.white, bg)
-    mon.setBackgroundColor(colors.black)
-end
-
-local function button(y, text, bg)
-    bar(y, "  " .. text .. "  ", bg or colors.gray, colors.white)
+    center(y, text, colors.white)
 end
 
 local function frame(title)
-    local w, h = mon.getSize()
-    clear(colors.black)
+    local w = mon.getSize()
+    clear(colors.white)
 
     mon.setBackgroundColor(colors.blue)
     mon.setCursorPos(1, 1)
     mon.write(string.rep(" ", w))
-    center(1, title, colors.white, colors.blue)
-
-    mon.setBackgroundColor(colors.gray)
-    mon.setCursorPos(1, h)
-    mon.write(string.rep(" ", w))
-    center(h, "Touch buttons to control", colors.white, colors.gray)
+    center(1, title, colors.white)
 end
 
 local function drawBigTime(timeStr, startY, showColon)
@@ -87,6 +77,9 @@ local function drawBigTime(timeStr, startY, showColon)
         end
     end
 
+    mon.setTextColor(colors.blue)
+    mon.setBackgroundColor(colors.white)
+
     for i = 1, 5 do
         mon.setCursorPos(math.floor((w - #lines[i]) / 2) + 1, startY + i - 1)
         mon.write(lines[i])
@@ -98,36 +91,32 @@ local function realTime()
 end
 
 local function drawMenu()
-    local w, h = mon.getSize()
     frame("CLOCK CONTROL")
 
-    center(3, "Select Mode", colors.yellow)
+    center(3, "Select Mode", colors.black)
     button(6, "Minecraft Time", colors.green)
     button(9, "Real Life Time", colors.cyan)
     button(12, "Exit", colors.red)
-
-    center(h - 2, "3x3 Monitor Ready", colors.lightGray)
 end
 
 local function drawClock(title, timeText, bgColor, showColon)
     local w, h = mon.getSize()
     frame(title)
 
-    mon.setTextColor(colors.yellow)
     drawBigTime(timeText, math.floor(h / 2) - 2, showColon)
 
     button(h - 3, "Back", bgColor or colors.gray)
 end
 
 local function transition(title)
-    clear(colors.black)
-    center(5, title, colors.yellow)
+    clear(colors.white)
+    center(5, title, colors.blue)
     sleep(0.15)
 
-    clear(colors.gray)
+    clear(colors.lightGray)
     sleep(0.08)
 
-    clear(colors.black)
+    clear(colors.white)
 end
 
 local screen = "menu"
@@ -147,7 +136,7 @@ while true do
                 screen = "realtime"
             elseif y == 12 then
                 clear()
-                center(5, "Goodbye!", colors.yellow)
+                center(5, "Goodbye!", colors.blue)
                 break
             end
         end
