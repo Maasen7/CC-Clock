@@ -1,0 +1,181 @@
+-- fancy_clock.lua
+
+local monitorSide = "top"
+local swedenOffset = 2 -- UTC+2 summer, UTC+1 winter
+
+local mon = peripheral.wrap(monitorSide)
+if not mon or peripheral.getType(monitorSide) ~= "monitor" then
+    error("No monitor found on side: " .. monitorSide)
+end
+
+mon.setTextScale(1)
+
+local bigNumbers = {
+    ["0"]={" ### ","#   #","#   #","#   #"," ### "},
+    ["1"]={"  #  "," ##  ","  #  ","  #  "," ### "},
+    ["2"]={" ### ","#   #","   # ","  #  ","#####"},
+    ["3"]={" ### ","    #"," ### ","    #"," ### "},
+    ["4"]={"#   #","#   #","#####","    #","    #"},
+    ["5"]={"#####","#    ","#### ","    #","#### "},
+    ["6"]={" ### ","#    ","#### ","#   #"," ### "},
+    ["7"]={"#####","    #","   # ","  #  ","  #  "},
+    ["8"]={" ### ","#   #"," ### ","#   #"," ### "},
+    ["9"]={" ### ","#   #"," ####","    #"," ### "},
+    [":"]={"     ","  #  ","     ","  #  ","     "},
+    [" "]={"     ","     ","     ","     ","     "}
+}
+
+local function clear(bg)
+    mon.setBackgroundColor(bg or colors.black)
+    mon.setTextColor(colors.white)
+    mon.clear()
+    mon.setCursorPos(1, 1)
+end
+
+local function center(y, text, fg, bg)
+    local w = mon.getSize()
+    mon.setTextColor(fg or colors.white)
+    mon.setBackgroundColor(bg or colors.black)
+    mon.setCursorPos(math.floor((w - #text) / 2) + 1, y)
+    mon.write(text)
+end
+
+local function bar(y, text, bg, fg)
+    local w = mon.getSize()
+    mon.setBackgroundColor(bg)
+    mon.setTextColor(fg or colors.white)
+    mon.setCursorPos(2, y)
+    mon.write(string.rep(" ", w - 2))
+    center(y, text, fg or colors.white, bg)
+    mon.setBackgroundColor(colors.black)
+end
+
+local function button(y, text, bg)
+    bar(y, "  " .. text .. "  ", bg or colors.gray, colors.white)
+end
+
+local function frame(title)
+    local w, h = mon.getSize()
+    clear(colors.black)
+
+    mon.setBackgroundColor(colors.blue)
+    mon.setCursorPos(1, 1)
+    mon.write(string.rep(" ", w))
+    center(1, title, colors.white, colors.blue)
+
+    mon.setBackgroundColor(colors.gray)
+    mon.setCursorPos(1, h)
+    mon.write(string.rep(" ", w))
+    center(h, "Touch buttons to control", colors.white, colors.gray)
+end
+
+local function drawBigTime(timeStr, startY, showColon)
+    local w = mon.getSize()
+    local lines = {"", "", "", "", ""}
+
+    for i = 1, #timeStr do
+        local char = timeStr:sub(i, i)
+
+        if char == ":" and not showColon then
+            char = " "
+        end
+
+        local pattern = bigNumbers[char] or bigNumbers["0"]
+
+        for j = 1, 5 do
+            lines[j] = lines[j] .. pattern[j] .. " "
+        end
+    end
+
+    for i = 1, 5 do
+        mon.setCursorPos(math.floor((w - #lines[i]) / 2) + 1, startY + i - 1)
+        mon.write(lines[i])
+    end
+end
+
+local function realTime()
+    return textutils.formatTime(os.time("utc") + swedenOffset, true)
+end
+
+local function drawMenu()
+    local w, h = mon.getSize()
+    frame("CLOCK CONTROL")
+
+    center(3, "Select Mode", colors.yellow)
+    button(6, "Minecraft Time", colors.green)
+    button(9, "Real Life Time", colors.cyan)
+    button(12, "Exit", colors.red)
+
+    center(h - 2, "3x3 Monitor Ready", colors.lightGray)
+end
+
+local function drawClock(title, timeText, bgColor, showColon)
+    local w, h = mon.getSize()
+    frame(title)
+
+    mon.setTextColor(colors.yellow)
+    drawBigTime(timeText, math.floor(h / 2) - 2, showColon)
+
+    button(h - 3, "Back", bgColor or colors.gray)
+end
+
+local function transition(title)
+    clear(colors.black)
+    center(5, title, colors.yellow)
+    sleep(0.15)
+
+    clear(colors.gray)
+    sleep(0.08)
+
+    clear(colors.black)
+end
+
+local screen = "menu"
+
+while true do
+    if screen == "menu" then
+        drawMenu()
+
+        local event, side, x, y = os.pullEvent("monitor_touch")
+
+        if side == monitorSide then
+            if y == 6 then
+                transition("Loading Minecraft Time...")
+                screen = "ingame"
+            elseif y == 9 then
+                transition("Loading Real Life Time...")
+                screen = "realtime"
+            elseif y == 12 then
+                clear()
+                center(5, "Goodbye!", colors.yellow)
+                break
+            end
+        end
+
+    elseif screen == "ingame" then
+        local showColon = math.floor(os.epoch("utc") / 500) % 2 == 0
+        drawClock("MINECRAFT TIME", textutils.formatTime(os.time("ingame"), true), colors.green, showColon)
+
+        local timer = os.startTimer(0.25)
+        local event, side, x, y = os.pullEvent()
+
+        local w, h = mon.getSize()
+        if event == "monitor_touch" and side == monitorSide and y == h - 3 then
+            transition("Returning...")
+            screen = "menu"
+        end
+
+    elseif screen == "realtime" then
+        local showColon = math.floor(os.epoch("utc") / 500) % 2 == 0
+        drawClock("REAL LIFE TIME", realTime(), colors.cyan, showColon)
+
+        local timer = os.startTimer(0.25)
+        local event, side, x, y = os.pullEvent()
+
+        local w, h = mon.getSize()
+        if event == "monitor_touch" and side == monitorSide and y == h - 3 then
+            transition("Returning...")
+            screen = "menu"
+        end
+    end
+end
