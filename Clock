@@ -5,52 +5,6 @@ local function clear()
     term.setCursorPos(1, 1)
 end
 
-local function swedenOffset()
-    -- Sweden is UTC+1 normally, UTC+2 during daylight saving time.
-    -- Simple EU daylight saving rule:
-    -- DST starts last Sunday of March, ends last Sunday of October.
-    local utc = os.date("!*t")
-    local year = utc.year
-
-    local function lastSunday(month)
-        local t = os.time({
-            year = year,
-            month = month + 1,
-            day = 0,
-            hour = 1
-        })
-        local d = os.date("!*t", t)
-        return d.day - d.wday + 1
-    end
-
-    local marchLastSunday = lastSunday(3)
-    local octoberLastSunday = lastSunday(10)
-
-    local inDST = false
-
-    if utc.month > 3 and utc.month < 10 then
-        inDST = true
-    elseif utc.month == 3 then
-        inDST = utc.day > marchLastSunday or
-                (utc.day == marchLastSunday and utc.hour >= 1)
-    elseif utc.month == 10 then
-        inDST = utc.day < octoberLastSunday or
-                (utc.day == octoberLastSunday and utc.hour < 1)
-    end
-
-    if inDST then
-        return 2
-    else
-        return 1
-    end
-end
-
-local function formatSwedenTime()
-    local utcSeconds = os.epoch("utc") / 1000
-    local swedenSeconds = utcSeconds + swedenOffset() * 3600
-    return os.date("!%H:%M:%S", swedenSeconds)
-end
-
 local function showClock(mode)
     while true do
         clear()
@@ -59,16 +13,16 @@ local function showClock(mode)
             print("Minecraft Time")
             print("==============")
             print(textutils.formatTime(os.time("ingame"), true))
+
         elseif mode == "sweden" then
             print("Sweden Time")
             print("===========")
-            print(formatSwedenTime())
+            print(textutils.formatTime(os.time("local"), true))
         end
 
         print()
-        print("Press Q to quit")
+        print("Press Q to go back")
 
-        local timer = os.startTimer(0.5)
         local event, key = os.pullEvent()
 
         if event == "key" and key == keys.q then
@@ -82,7 +36,7 @@ while true do
 
     print("Clock Menu")
     print("==========")
-    print("1. Minecraft in-game time, 24-hour")
+    print("1. Minecraft in-game time (24h)")
     print("2. Real life Sweden clock")
     print("3. Exit")
     print()
