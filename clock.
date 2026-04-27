@@ -1,4 +1,4 @@
--- clean_clock_v2.lua
+-- clean_clock_bold.lua
 
 local monitorSide = "top"
 local swedenOffset = 2
@@ -11,24 +11,23 @@ end
 mon.setTextScale(0.5)
 
 local bgColor = colors.white
-local clockColor = colors.blue
-local accentColor = colors.lightBlue
 local screen = "menu"
 local tick = 0
 
+-- 🔥 BOLD / THICK DIGITS
 local bigNumbers = {
-    ["0"]={" ### ","#   #","#   #","#   #"," ### "},
+    ["0"]={"#####","#   #","#   #","#   #","#####"},
     ["1"]={"  #  "," ##  ","  #  ","  #  "," ### "},
-    ["2"]={" ### ","#   #","   # ","  #  ","#####"},
-    ["3"]={" ### ","    #"," ### ","    #"," ### "},
+    ["2"]={"#####","    #","#####","#    ","#####"},
+    ["3"]={"#####","    #","#####","    #","#####"},
     ["4"]={"#   #","#   #","#####","    #","    #"},
-    ["5"]={"#####","#    ","#### ","    #","#### "},
-    ["6"]={" ### ","#    ","#### ","#   #"," ### "},
+    ["5"]={"#####","#    ","#####","    #","#####"},
+    ["6"]={"#####","#    ","#####","#   #","#####"},
     ["7"]={"#####","    #","   # ","  #  ","  #  "},
-    ["8"]={" ### ","#   #"," ### ","#   #"," ### "},
-    ["9"]={" ### ","#   #"," ####","    #"," ### "},
-    [":"]={"   "," # ","   "," # ","   "},
-    [" "]={"   ","   ","   ","   ","   "}
+    ["8"]={"#####","#   #","#####","#   #","#####"},
+    ["9"]={"#####","#   #","#####","    #","#####"},
+    [":"]={"     ","  #  ","     ","  #  ","     "},
+    [" "]={"     ","     ","     ","     ","     "}
 }
 
 local function clear()
@@ -46,23 +45,27 @@ local function center(y, text, color)
     mon.write(text)
 end
 
+-- 🔵 thick but clean clock rendering
 local function drawBigTime(timeStr, startY, showColon)
     local w = mon.getSize()
     local lines = {"", "", "", "", ""}
 
     for i = 1, #timeStr do
         local char = timeStr:sub(i, i)
-        if char == ":" and not showColon then char = " " end
+
+        if char == ":" and not showColon then
+            char = " "
+        end
 
         local pattern = bigNumbers[char] or bigNumbers[" "]
 
         for j = 1, 5 do
-            lines[j] = lines[j] .. pattern[j] .. " "
+            lines[j] = lines[j] .. pattern[j]
         end
     end
 
+    mon.setTextColor(colors.black)
     mon.setBackgroundColor(bgColor)
-    mon.setTextColor(clockColor)
 
     for i = 1, 5 do
         mon.setCursorPos(math.floor((w - #lines[i]) / 2) + 1, startY + i - 1)
@@ -70,12 +73,13 @@ local function drawBigTime(timeStr, startY, showColon)
     end
 end
 
+-- ✨ subtle scanline animation (only on clock)
 local function drawScanline()
     local w, h = mon.getSize()
     local y = 6 + (tick % math.max(1, h - 12))
 
     mon.setBackgroundColor(bgColor)
-    mon.setTextColor(accentColor)
+    mon.setTextColor(colors.lightGray)
     mon.setCursorPos(4, y)
     mon.write(string.rep("-", w - 7))
 end
@@ -88,14 +92,16 @@ local function shortTime(t)
     return t:sub(1, 5)
 end
 
+-- 🧭 MENU (no animation)
 local function drawMenu()
     clear()
-    center(4, "CLOCK", colors.blue)
+    center(4, "CLOCK", colors.black)
     center(7, "[ Minecraft Time ]", colors.black)
     center(10, "[ Real Life Time ]", colors.black)
     center(13, "[ Exit ]", colors.red)
 end
 
+-- 🕒 CLOCK SCREEN
 local function drawClock(title, timeText, showColon)
     local _, h = mon.getSize()
 
@@ -123,7 +129,7 @@ while true do
                 screen = "realtime"
             elseif y >= 12 and y <= 14 then
                 clear()
-                center(7, "Goodbye!", colors.blue)
+                center(7, "Goodbye!", colors.black)
                 break
             end
         end
