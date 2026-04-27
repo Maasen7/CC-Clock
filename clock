@@ -14,7 +14,6 @@ local bgColor = colors.white
 local screen = "menu"
 local tick = 0
 
--- 🔥 BOLD / THICK DIGITS
 local bigNumbers = {
     ["0"]={"#####","#   #","#   #","#   #","#####"},
     ["1"]={"  #  "," ##  ","  #  ","  #  "," ### "},
@@ -45,7 +44,6 @@ local function center(y, text, color)
     mon.write(text)
 end
 
--- 🔵 thick but clean clock rendering
 local function drawBigTime(timeStr, startY, showColon)
     local w = mon.getSize()
     local lines = {"", "", "", "", ""}
@@ -73,7 +71,6 @@ local function drawBigTime(timeStr, startY, showColon)
     end
 end
 
--- ✨ subtle scanline animation (only on clock)
 local function drawScanline()
     local w, h = mon.getSize()
     local y = 6 + (tick % math.max(1, h - 12))
@@ -92,16 +89,15 @@ local function shortTime(t)
     return t:sub(1, 5)
 end
 
--- 🧭 MENU (no animation)
 local function drawMenu()
     clear()
-    center(4, "CLOCK", colors.black)
-    center(7, "[ Minecraft Time ]", colors.black)
-    center(10, "[ Real Life Time ]", colors.black)
-    center(13, "[ Exit ]", colors.red)
+    center(3, "CLOCK", colors.black)
+    center(6, "[ Minecraft Time ]", colors.black)
+    center(9, "[ Real Life Time ]", colors.black)
+    center(12, "[ Both Times ]", colors.black)
+    center(15, "[ Exit ]", colors.red)
 end
 
--- 🕒 CLOCK SCREEN
 local function drawClock(title, timeText, showColon)
     local _, h = mon.getSize()
 
@@ -110,6 +106,22 @@ local function drawClock(title, timeText, showColon)
 
     drawScanline()
     drawBigTime(shortTime(timeText), math.floor(h / 2) - 2, showColon)
+
+    center(h - 3, "< touch bottom to go back >", colors.gray)
+end
+
+local function drawBothTimes(showColon)
+    local _, h = mon.getSize()
+
+    clear()
+
+    center(2, ". BOTH TIMES .", colors.gray)
+
+    center(5, "MINECRAFT", colors.gray)
+    drawBigTime(shortTime(textutils.formatTime(os.time("ingame"), true)), 7, showColon)
+
+    center(15, "REAL LIFE", colors.gray)
+    drawBigTime(shortTime(realTime()), 17, showColon)
 
     center(h - 3, "< touch bottom to go back >", colors.gray)
 end
@@ -123,11 +135,13 @@ while true do
         local event, side, x, y = os.pullEvent("monitor_touch")
 
         if side == monitorSide then
-            if y >= 6 and y <= 8 then
+            if y >= 5 and y <= 7 then
                 screen = "ingame"
-            elseif y >= 9 and y <= 11 then
+            elseif y >= 8 and y <= 10 then
                 screen = "realtime"
-            elseif y >= 12 and y <= 14 then
+            elseif y >= 11 and y <= 13 then
+                screen = "both"
+            elseif y >= 14 and y <= 16 then
                 clear()
                 center(7, "Goodbye!", colors.black)
                 break
@@ -149,6 +163,18 @@ while true do
     elseif screen == "realtime" then
         local showColon = math.floor(os.epoch("utc") / 500) % 2 == 0
         drawClock("REAL LIFE", realTime(), showColon)
+
+        os.startTimer(0.15)
+        local event, side, x, y = os.pullEvent()
+
+        local _, h = mon.getSize()
+        if event == "monitor_touch" and side == monitorSide and y >= h - 5 then
+            screen = "menu"
+        end
+
+    elseif screen == "both" then
+        local showColon = math.floor(os.epoch("utc") / 500) % 2 == 0
+        drawBothTimes(showColon)
 
         os.startTimer(0.15)
         local event, side, x, y = os.pullEvent()
