@@ -10,6 +10,8 @@ end
 
 mon.setTextScale(1)
 
+local bgColor = colors.lightGray
+
 local bigNumbers = {
     ["0"]={" ### ","#   #","#   #","#   #"," ### "},
     ["1"]={"  #  "," ##  ","  #  ","  #  "," ### "},
@@ -26,7 +28,7 @@ local bigNumbers = {
 }
 
 local function clear(bg)
-    mon.setBackgroundColor(bg or colors.white)
+    mon.setBackgroundColor(bg or bgColor)
     mon.setTextColor(colors.black)
     mon.clear()
     mon.setCursorPos(1, 1)
@@ -35,7 +37,7 @@ end
 local function center(y, text, fg)
     local w = mon.getSize()
     mon.setTextColor(fg or colors.black)
-    mon.setBackgroundColor(colors.white)
+    mon.setBackgroundColor(bgColor)
     mon.setCursorPos(math.floor((w - #text) / 2) + 1, y)
     mon.write(text)
 end
@@ -46,22 +48,35 @@ local function button(y, text, bg)
     mon.setTextColor(colors.white)
     mon.setCursorPos(2, y)
     mon.write(string.rep(" ", w - 2))
-    center(y, text, colors.white)
+
+    mon.setCursorPos(math.floor((w - #text) / 2) + 1, y)
+    mon.write(text)
+
+    mon.setBackgroundColor(bgColor)
 end
 
 local function frame(title)
     local w = mon.getSize()
-    clear(colors.white)
+    clear(bgColor)
 
     mon.setBackgroundColor(colors.blue)
+    mon.setTextColor(colors.white)
     mon.setCursorPos(1, 1)
     mon.write(string.rep(" ", w))
-    center(1, title, colors.white)
+
+    mon.setCursorPos(math.floor((w - #title) / 2) + 1, 1)
+    mon.write(title)
+
+    mon.setBackgroundColor(bgColor)
 end
 
 local function drawBigTime(timeStr, startY, showColon)
     local w = mon.getSize()
-    local lines = {"", "", "", "", ""}
+    local lines = {}
+
+    for i = 1, 10 do
+        lines[i] = ""
+    end
 
     for i = 1, #timeStr do
         local char = timeStr:sub(i, i)
@@ -73,14 +88,15 @@ local function drawBigTime(timeStr, startY, showColon)
         local pattern = bigNumbers[char] or bigNumbers["0"]
 
         for j = 1, 5 do
-            lines[j] = lines[j] .. pattern[j] .. " "
+            lines[(j * 2) - 1] = lines[(j * 2) - 1] .. pattern[j] .. pattern[j] .. " "
+            lines[j * 2] = lines[j * 2] .. pattern[j] .. pattern[j] .. " "
         end
     end
 
     mon.setTextColor(colors.blue)
-    mon.setBackgroundColor(colors.white)
+    mon.setBackgroundColor(bgColor)
 
-    for i = 1, 5 do
+    for i = 1, 10 do
         mon.setCursorPos(math.floor((w - #lines[i]) / 2) + 1, startY + i - 1)
         mon.write(lines[i])
     end
@@ -99,24 +115,24 @@ local function drawMenu()
     button(12, "Exit", colors.red)
 end
 
-local function drawClock(title, timeText, bgColor, showColon)
+local function drawClock(title, timeText, bgColorForButton, showColon)
     local w, h = mon.getSize()
     frame(title)
 
-    drawBigTime(timeText, math.floor(h / 2) - 2, showColon)
+    drawBigTime(timeText, math.floor(h / 2) - 5, showColon)
 
-    button(h - 3, "Back", bgColor or colors.gray)
+    button(h - 3, "Back", bgColorForButton or colors.gray)
 end
 
 local function transition(title)
-    clear(colors.white)
+    clear(bgColor)
     center(5, title, colors.blue)
     sleep(0.15)
 
-    clear(colors.lightGray)
+    clear(colors.white)
     sleep(0.08)
 
-    clear(colors.white)
+    clear(bgColor)
 end
 
 local screen = "menu"
@@ -135,7 +151,7 @@ while true do
                 transition("Loading Real Life Time...")
                 screen = "realtime"
             elseif y == 12 then
-                clear()
+                clear(bgColor)
                 center(5, "Goodbye!", colors.blue)
                 break
             end
