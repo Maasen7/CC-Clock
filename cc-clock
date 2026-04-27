@@ -1,7 +1,7 @@
 -- big_clean_clock.lua
 
 local monitorSide = "top"
-local swedenOffset = 2
+local swedenOffset = 2 -- UTC+2 summer, UTC+1 winter
 
 local mon = peripheral.wrap(monitorSide)
 if not mon or peripheral.getType(monitorSide) ~= "monitor" then
@@ -43,12 +43,17 @@ local function center(y, text, color)
     mon.write(text)
 end
 
-local function shortTime(t)
-    return t:sub(1, 5)
+local function ingameTime()
+    local t = os.time("ingame") % 24
+    return textutils.formatTime(t, true)
 end
 
 local function realTime()
-    return textutils.formatTime(os.time("utc") + swedenOffset, true)
+    local seconds = os.epoch("utc") / 1000
+    local hours = ((seconds / 3600) + swedenOffset) % 24
+    local minutes = (seconds / 60) % 60
+
+    return string.format("%02d:%02d", math.floor(hours), math.floor(minutes))
 end
 
 local function drawBigTime(timeStr, startY, showColon)
@@ -80,8 +85,6 @@ end
 
 local function drawMenu()
     clear()
-    local _, h = mon.getSize()
-
     center(2, "CLOCK", colors.black)
     center(4, "[ Minecraft ]", colors.black)
     center(6, "[ Real Life ]", colors.black)
@@ -94,7 +97,7 @@ local function drawClock(title, timeText, showColon)
     local _, h = mon.getSize()
 
     center(1, ". " .. title .. " .", colors.gray)
-    drawBigTime(shortTime(timeText), math.floor(h / 2) - 2, showColon)
+    drawBigTime(timeText, math.floor(h / 2) - 2, showColon)
     center(h, "< back >", colors.gray)
 end
 
@@ -103,10 +106,10 @@ local function drawBothTimes(showColon)
     local _, h = mon.getSize()
 
     center(1, "MINECRAFT", colors.gray)
-    drawBigTime(shortTime(textutils.formatTime(os.time("ingame"), true)), 2, showColon)
+    drawBigTime(ingameTime(), 2, showColon)
 
     center(8, "REAL LIFE", colors.gray)
-    drawBigTime(shortTime(realTime()), 9, showColon)
+    drawBigTime(realTime(), 9, showColon)
 
     center(h, "< back >", colors.gray)
 end
@@ -133,7 +136,7 @@ while true do
 
     elseif screen == "ingame" then
         local showColon = math.floor(os.epoch("utc") / 500) % 2 == 0
-        drawClock("MINECRAFT", textutils.formatTime(os.time("ingame"), true), showColon)
+        drawClock("MINECRAFT", ingameTime(), showColon)
 
         os.startTimer(0.2)
         local event, side, x, y = os.pullEvent()
