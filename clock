@@ -1,39 +1,40 @@
--- clock.lua
+-- CONFIG
+local monitorSide = "top" -- change this if needed
 
-local function clear()
-    term.clear()
-    term.setCursorPos(1, 1)
+local output = term
+if peripheral.isPresent(monitorSide) and peripheral.getType(monitorSide) == "monitor" then
+    output = peripheral.wrap(monitorSide)
+    output.setTextScale(1)
+else
+    print("No monitor found on side: " .. monitorSide)
+    print("Using computer screen instead.")
+    sleep(2)
 end
 
-local function showClock(mode)
-    while true do
-        clear()
+local function clear(t)
+    t.setBackgroundColor(colors.black)
+    t.setTextColor(colors.white)
+    t.clear()
+    t.setCursorPos(1, 1)
+end
 
-        if mode == "ingame" then
-            print("Minecraft Time")
-            print("==============")
-            print(textutils.formatTime(os.time("ingame"), true))
+local function writeLines(t, title, timeText)
+    clear(t)
+    t.write(title)
+    t.setCursorPos(1, 2)
+    t.write(string.rep("=", #title))
+    t.setCursorPos(1, 4)
+    t.write(timeText)
+end
 
-        elseif mode == "sweden" then
-            print("Sweden Time")
-            print("===========")
-            print(textutils.formatTime(os.time("local"), true))
-        end
-
-        print()
-        print("Press Q to go back")
-
-        local event, key = os.pullEvent()
-
-        if event == "key" and key == keys.q then
-            break
-        end
-    end
+local function swedenTime()
+    -- Sweden summer time: UTC+2
+    -- Change +2 to +1 during winter time
+    return textutils.formatTime(os.time("utc") + 2, true)
 end
 
 while true do
-    clear()
-
+    clear(term)
     print("Clock Menu")
     print("==========")
     print("1. Minecraft in-game time (24h)")
@@ -45,11 +46,20 @@ while true do
     local choice = read()
 
     if choice == "1" then
-        showClock("ingame")
+        while true do
+            writeLines(output, "Minecraft Time", textutils.formatTime(os.time("ingame"), true))
+            sleep(0.5)
+        end
+
     elseif choice == "2" then
-        showClock("sweden")
+        while true do
+            writeLines(output, "Sweden Time", swedenTime())
+            sleep(0.5)
+        end
+
     elseif choice == "3" then
-        clear()
+        clear(output)
+        clear(term)
         print("Goodbye!")
         break
     end
