@@ -1,7 +1,7 @@
 -- clock_touch.lua
 
-local monitorSide = "top" -- monitor side
-local swedenOffset = 2    -- UTC+2 summer, UTC+1 winter
+local monitorSide = "top"
+local swedenOffset = 2
 
 local mon = peripheral.wrap(monitorSide)
 if not mon or peripheral.getType(monitorSide) ~= "monitor" then
@@ -39,7 +39,7 @@ local function drawMenu()
     center(1, "Clock Menu")
     center(2, "==========")
     button(5, "Minecraft Time")
-    button(7, "Sweden Time")
+    button(7, "Real Life Time")
     button(9, "Exit")
 end
 
@@ -50,7 +50,7 @@ local function drawClock(title, timeText)
     button(6, "Back")
 end
 
-local function swedenTime()
+local function realTime()
     return textutils.formatTime(os.time("utc") + swedenOffset, true)
 end
 
@@ -66,7 +66,7 @@ while true do
             if y == 5 then
                 screen = "ingame"
             elseif y == 7 then
-                screen = "sweden"
+                screen = "realtime"
             elseif y == 9 then
                 clear()
                 center(3, "Goodbye!")
@@ -84,8 +84,8 @@ while true do
             screen = "menu"
         end
 
-    elseif screen == "sweden" then
-        drawClock("Sweden Time", swedenTime())
+    elseif screen == "realtime" then
+        drawClock("Real Life Time", realTime())
 
         local timer = os.startTimer(0.5)
         local event, p1, x, y = os.pullEvent()
